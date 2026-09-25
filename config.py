@@ -74,7 +74,7 @@ g    = 9.81
 rho0 = 1.225
 
 # vent : moyenne + rafales (Ornstein-Uhlenbeck), repere monde
-wind_mean       = (0.0, 0.0, 0.0)
+wind_mean       = (2, 3, 3)
 wind_gust_sigma = 2.0      # ecart-type des rafales (m/s)
 wind_tau        = 0.3      # temps de correlation (s)
 

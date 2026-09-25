@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/star_badge.png" width="216" alt="STAR"></p>
+
 # 6DDL_TVC — 6-DOF simulator for a thrust-vector-controlled model rocket
 
 [![tests](https://github.com/AxelBoularot/6DDL_TVC/actions/workflows/tests.yml/badge.svg)](https://github.com/AxelBoularot/6DDL_TVC/actions/workflows/tests.yml)
@@ -7,6 +9,10 @@ A 6-degree-of-freedom flight simulator for a small rocket stabilised by a gimbal
 motor nozzle (TVC), with quaternion attitude, variable mass, a realistic servo chain
 (gear ratio, end stops, delay, mechanical backlash), gusty wind, motor ejection and
 parachute. Pure Python (NumPy + Matplotlib), easy to read and to modify.
+
+**A STAR project.** STAR is a group of people who set out to build every project
+that comes to mind. This simulator was written to design and tune the TVC of our
+model rockets, and it is checked against their real flight logs.
 
 <p align="center">
   <a href="docs/second_flight.mp4"><img src="docs/second_flight.gif" width="360" alt="Second TVC flight: lift-off and powered ascent"></a><br>
@@ -218,6 +224,9 @@ MIT — see [LICENSE](LICENSE).
 ---
 
 ## 🇫🇷 En bref
+
+Un projet du groupe **STAR**, un groupe de personnes qui veulent réaliser tous les
+projets qui leur passent par la tête.
 
 Simulateur 6 DDL d'une fusée stabilisée par tuyère orientable (TVC) : attitude par
 quaternions, masse/CG/inertie variables, chaîne servo réaliste (rapport, butée,
