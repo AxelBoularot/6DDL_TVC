@@ -8,6 +8,11 @@ motor nozzle (TVC), with quaternion attitude, variable mass, a realistic servo c
 (gear ratio, end stops, delay, mechanical backlash), gusty wind, motor ejection and
 parachute. Pure Python (NumPy + Matplotlib), easy to read and to modify.
 
+<p align="center">
+  <a href="docs/second_flight.mp4"><img src="docs/second_flight.gif" width="360" alt="Second TVC flight: lift-off and powered ascent"></a><br>
+  <em>Second TVC flight (flight 2, servo delay 30 ms). Click the image for the video.</em>
+</p>
+
 ![Results](docs/resultats.png)
 
 ## Quick start
@@ -26,6 +31,7 @@ python main.py                 # simulate to apogee, plots + 3D animation
 | `--seed N` | reproducible wind gusts and torque noise |
 | `--no-anim` | plots only |
 | `--save DIR` | save the plots as PNG, no window |
+| `--comparer` | compare the real flights in `vols/` with the simulator (figures + README table) |
 
 Switches at the top of `config.py`: `STOP_A_APOGEE`, `STOP_FIN_COMBUSTION` (stop at burnout),
 `COUPER_TVC_FIN_COMBUSTION` (at burnout the PID is switched off and the nozzle returns to centre),
@@ -70,9 +76,11 @@ aerodynamics, TVC chain, wind, thrust curve, ejection, parachute).
 │   ├── environnement.py air density, wind gusts, disturbance torque
 │   ├── evenements.py    lift-off, motor ejection, parachute, stop conditions
 │   ├── historique.py    time-history recording
-│   └── affichage.py     2D plots and 3D animation
+│   ├── affichage.py     2D plots and 3D animation
+│   └── vols_reels.py    real flight logs vs simulation (figures, README table)
+├── vols/                flight-computer logs + vols.json (servo delay of each flight)
 ├── tests/               unit and integration tests (python -m pytest)
-└── docs/                figure used in this README
+└── docs/                figures and flight video used in this README
 ```
 
 Use it from your own script (run from the repository root), e.g. for gain tuning or
@@ -98,6 +106,92 @@ print(hist['z'].max(), hist['tilt'].max())
 - The backlash model assumes the nozzle stays where it was last pushed.
 - Parameters are those of one specific rocket: measure your own (mass, CG, inertia,
   nozzle position, servo delay, backlash) before trusting the results.
+
+## Real flights vs simulation
+
+The flight-computer logs in `vols/` are replayed in the simulator with the same servo
+delay and the same initial attitude, then compared. The per-flight figures show one run
+with the `config.py` parameters (seed 0). Wind gusts and disturbance torque are random, so
+each flight is also simulated 10 times: the summary figure shows the spread of these runs
+(grey band and median), and the table gives the base run with the 10-run min–max in
+brackets. Regenerate everything (figures and the table below) with:
+
+```bash
+python main.py --comparer
+```
+
+**Adding a flight:** copy the log into `vols/` and add an entry to `vols/vols.json`
+(`nom`, `fichier`, `servoDelay`, optional `t_decollage` = lift-off time in the log, in s,
+`signe` = sign convention of the flight computer). Log format, no header, `;` separator:
+`time_ms ; temperature_C ; pressure_hPa ; angle_1 ; angle_2 ; nozzle_1 ; nozzle_2`.
+
+<!-- COMPARAISON:DEBUT -->
+
+From lift-off to burnout (2.04 s), **measured** / simulated:
+
+| Flight | Servo delay | Max tilt | Oscillation (RMS rate, °/s) | Nozzle at end stop | Altitude at burnout |
+|---|---|---|---|---|---|
+| Flight 1 | 70 ms | **22.2°** / 32.4 (22.2–47.4)° | **150** / 212 (171–214) | **52 %** / 66 (53–79) % | **17.5 m** / 25.3 m |
+| Flight 2 | 30 ms | **11.3°** / 7.4 (4.0–12.5)° | **12** / 26 (18–28) | **0 %** / 0 (0–2) % | **16.6 m** / 28.2 m |
+| Flight 3 | 30 ms | **7.0°** / 7.4 (4.0–12.4)° | **20** / 26 (18–29) | **0 %** / 0 (0–2) % | **18.3 m** / 28.2 m |
+| Flight 4 | 30 ms | **11.4°** / 7.5 (4.0–12.5)° | **17** / 26 (18–27) | **0 %** / 0 (0–2) % | **17.4 m** / 28.2 m |
+
+Simulated values: the run with the `config.py` parameters (the flight's servo delay and initial attitude, seed 0), shown in the per-flight figures; in brackets, the min–max over 10 runs with random wind gusts and disturbance torque (grey band of the summary figure).
+
+![Measured vs simulated tilt](docs/comparaison_vols.png)
+
+<details><summary>Flight 1 — first TVC flight, servo delay 70 ms</summary>
+
+![Flight 1](docs/comparaison_vol_1.png)
+
+</details>
+
+<details><summary>Flight 2 — servo delay 30 ms</summary>
+
+![Flight 2](docs/comparaison_vol_2.png)
+
+</details>
+
+<details><summary>Flight 3 — servo delay 30 ms</summary>
+
+![Flight 3](docs/comparaison_vol_3.png)
+
+</details>
+
+<details><summary>Flight 4 — servo delay 30 ms</summary>
+
+![Flight 4](docs/comparaison_vol_4.png)
+
+</details>
+
+<!-- COMPARAISON:FIN -->
+
+**Lift-off alignment.** The nozzles move before lift-off (servos armed), but the
+attitude does not change while the rocket sits on the pad. Lift-off is therefore the
+start of free rotation: smoothed angular rate above 10 °/s for 50 ms, traced back to the
+last instant it was below 3 °/s. On flight 1 the board steered for 0.4 s on the pad; the
+logs of flights 2–4 start at lift-off (the board triggers the log). The barometer is only
+a check: with its 0.1 hPa (≈ 0.85 m) steps it sees the climb 0.1–0.3 s late. Lift-off can
+be forced with `t_decollage` in `vols.json`.
+
+**What the first four flights show**
+
+- The 70 ms servo delay of flight 1 is the cause of its oscillation. The simulator run
+  with 70 ms reproduces a limit cycle of the same period (0.37 s simulated, 0.32–0.40 s
+  measured) with the nozzle hitting its end stops; with 30 ms both the real flights and
+  the simulation stay stable.
+- The measured maximum angles fall inside the simulated ranges (22° in 22–47° at 70 ms,
+  7–11° in 4–12.5° at 30 ms), but the simulator's disturbances (gusts, torque noise) are
+  generic, not measured.
+- Flights 2–4 drift slowly on axis 1 during the burn and the nozzle holds a growing
+  offset: a steady disturbing torque (thrust misalignment or CG offset) that the
+  simulator does not model yet.
+- The real rocket climbs slower than the simulated one (about 17 m vs 28 m at burnout):
+  thrust, mass or drag in `config.py` should be recalibrated.
+- The figures cover the whole flight log, burnout included. After burnout the simulated
+  rocket tumbles much faster than the real one (past 90° about 0.3 s after burnout,
+  versus about 40° at the end of the real logs, 0.4–0.5 s after burnout): the motor
+  ejection kick and the lack of fins in the model are the first things to check.
 
 ## Tests
 

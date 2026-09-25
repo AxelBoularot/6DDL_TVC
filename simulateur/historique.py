@@ -3,8 +3,8 @@ historique.py -- enregistrement des grandeurs a chaque pas.
 """
 import numpy as np
 
-CLES = ['t', 'x', 'y', 'z', 'tilt', 'dp', 'dy', 'aoa', 'cp', 'mass', 'xcg', 'Ir',
-        'bzx', 'bzy', 'bzz']
+CLES = ['t', 'x', 'y', 'z', 'tilt', 'ang_x', 'ang_y', 'dp', 'dy', 'aoa', 'cp', 'mass',
+        'xcg', 'Ir', 'bzx', 'bzy', 'bzz']
 
 
 class Historique:

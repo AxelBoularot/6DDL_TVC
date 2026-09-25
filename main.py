@@ -7,6 +7,7 @@ main.py -- point d'entree.
     python main.py --seed 0        # tirage reproductible (vent, bruit)
     python main.py --no-anim       # graphiques seulement
     python main.py --save figures  # enregistre les graphiques en PNG (sans fenetre)
+    python main.py --comparer      # vols reels (vols/) vs simulation -> docs/ + README
 
 Parametres physiques : config.py
 """
@@ -23,7 +24,17 @@ def main():
     ap.add_argument("--seed", type=int, default=C.SEED, help="graine aleatoire (reproductible)")
     ap.add_argument("--no-anim", action="store_true", help="pas d'animation 3D")
     ap.add_argument("--save", metavar="DOSSIER", help="enregistrer les graphiques en PNG, sans affichage")
+    ap.add_argument("--comparer", action="store_true",
+                    help="comparer les vols reels de vols/ a la simulation (figures + README)")
     args = ap.parse_args()
+
+    if args.comparer:
+        import matplotlib
+        matplotlib.use("Agg")
+        from simulateur.vols_reels import comparer
+        comparer(seed=0 if args.seed is None else args.seed)
+        print("Figures -> docs/comparaison_*.png | tableau mis a jour dans README.md")
+        return
 
     if args.save:
         import matplotlib

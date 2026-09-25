@@ -5,7 +5,7 @@ simulation.py -- boucle principale : assemble les modules a chaque pas de temps.
 """
 import numpy as np
 import config as C
-from .quaternions import q_rotate, inclinaison
+from .quaternions import q_rotate, inclinaison, angles_fusee
 from .moteur import Moteur
 from .masse import proprietes_massiques
 from .environnement import densite_air, Vent, bruit_couple
@@ -48,6 +48,7 @@ def simuler(dt=C.dt, duree=C.duree, seed=C.SEED, verbeux=True, stop_apogee=None,
 
         # ---- commande TVC ----
         bz_world, tilt = inclinaison(e.q)
+        ang_x, ang_y = angles_fusee(bz_world)
         dp, dy = tvc.pas(t, e.q, dt)
 
         # ---- efforts ----
@@ -71,7 +72,8 @@ def simuler(dt=C.dt, duree=C.duree, seed=C.SEED, verbeux=True, stop_apogee=None,
         if evts.verifier_decollage(t, F_world, T_force, mass * C.g):
             integrer_pas(e, F_world, tau, mass, np.array([Ir, Ir, Ia]), dt)
 
-        hist.ajouter(t=t, x=e.pos[0], y=e.pos[1], z=e.pos[2], tilt=tilt, dp=dp, dy=dy,
+        hist.ajouter(t=t, x=e.pos[0], y=e.pos[1], z=e.pos[2], tilt=tilt,
+                     ang_x=ang_x, ang_y=ang_y, dp=dp, dy=dy,
                      aoa=aoa_deg, cp=cp_now, mass=mass, xcg=x_cg, Ir=Ir,
                      bzx=bz_world[0], bzy=bz_world[1], bzz=bz_world[2])
 

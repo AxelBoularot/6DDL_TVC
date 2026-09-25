@@ -1,0 +1,34 @@
+{
+  "_format": "CSV, no header, ';' separator: time_ms ; temperature_C ; pressure_hPa ; angle_1_deg ; angle_2_deg ; nozzle_1_deg ; nozzle_2_deg",
+  "_signe": "signe = -1: the flight computer counts angles opposite to the simulator (nozzle = -P x angle)",
+  "vols": [
+    {
+      "nom": "Flight 1",
+      "fichier": "vol_1.csv",
+      "servoDelay": 0.07,
+      "signe": -1,
+      "note": "first TVC flight, servo delay 70 ms"
+    },
+    {
+      "nom": "Flight 2",
+      "fichier": "vol_2.csv",
+      "servoDelay": 0.03,
+      "signe": -1,
+      "note": "servo delay 30 ms"
+    },
+    {
+      "nom": "Flight 3",
+      "fichier": "vol_3.csv",
+      "servoDelay": 0.03,
+      "signe": -1,
+      "note": "servo delay 30 ms"
+    },
+    {
+      "nom": "Flight 4",
+      "fichier": "vol_4.csv",
+      "servoDelay": 0.03,
+      "signe": -1,
+      "note": "servo delay 30 ms"
+    }
+  ]
+}

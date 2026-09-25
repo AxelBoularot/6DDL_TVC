@@ -12,8 +12,13 @@ class PID:
     """PID sur l'erreur d'attitude (deg). Sortie = angle TUYERE voulu (deg).
        Anti-windup : on n'integre que si la sortie n'est pas en butee
        (ou si l'erreur la fait sortir de la butee)."""
-    def __init__(self, e_init=0.0, P=C.P, I=C.I, D=C.D, limite=C.angle_max_tvc):
-        self.P, self.I, self.D, self.limite = P, I, D, limite
+    def __init__(self, e_init=0.0, P=None, I=None, D=None, limite=None):
+        # valeurs lues dans config AU MOMENT de la creation (pas a l'import) :
+        # un script peut modifier config.P etc. avant de lancer simuler()
+        self.P = C.P if P is None else P
+        self.I = C.I if I is None else I
+        self.D = C.D if D is None else D
+        self.limite = C.angle_max_tvc if limite is None else limite
         self.integ = 0.0
         self.e_prev = e_init          # pas de "coup de derivee" au 1er pas
 
@@ -79,11 +84,11 @@ class ControleurTVC:
     """Deux axes (pitch, yaw) : erreur d'attitude -> PID -> chaine servo -> tuyere.
        Si couper=True, a la fin de la combustion le PID est coupe et la consigne
        tuyere passe a 0 (retour au centre a travers le retard et le jeu)."""
-    def __init__(self, q0, dt=C.dt, couper=C.COUPER_TVC_FIN_COMBUSTION):
+    def __init__(self, q0, dt=C.dt, couper=None):
         e0_p, e0_y = erreurs_attitude(q0)
         self.pid_p, self.pid_y = PID(e0_p), PID(e0_y)
         self.servo_p, self.servo_y = ChaineServo(dt), ChaineServo(dt)
-        self.couper = couper
+        self.couper = C.COUPER_TVC_FIN_COMBUSTION if couper is None else couper
 
     def pas(self, t, q, dt):
         """Renvoie les angles tuyere reels (dp, dy) en degres."""

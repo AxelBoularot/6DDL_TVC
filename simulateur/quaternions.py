@@ -61,5 +61,11 @@ def inclinaison(q):
     return bz, math.degrees(math.acos(clamp(bz[2], -1.0, 1.0)))
 
 
+def angles_fusee(bz):
+    """Angle (signe, deg) de l'axe de la fusee par rapport a la verticale, dans le
+       plan X-Z (penche vers +X > 0) et dans le plan Y-Z (penche vers +Y > 0)."""
+    return math.degrees(math.atan2(bz[0], bz[2])), math.degrees(math.atan2(bz[1], bz[2]))
+
+
 def clamp(v, lo, hi):
     return max(lo, min(hi, v))

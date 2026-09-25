@@ -7,11 +7,10 @@ from .quaternions import q_rotate
 
 
 class Evenements:
-    def __init__(self, dt=C.dt, verbeux=True, stop_apogee=C.STOP_A_APOGEE,
-                 stop_combustion=C.STOP_FIN_COMBUSTION):
+    def __init__(self, dt=C.dt, verbeux=True, stop_apogee=None, stop_combustion=None):
         self.verbeux = verbeux
-        self.stop_apogee = stop_apogee
-        self.stop_combustion = stop_combustion
+        self.stop_apogee = C.STOP_A_APOGEE if stop_apogee is None else stop_apogee
+        self.stop_combustion = C.STOP_FIN_COMBUSTION if stop_combustion is None else stop_combustion
         self.liftoff = False
         self.moteur_present = True
         self.moteur_ejecte = False

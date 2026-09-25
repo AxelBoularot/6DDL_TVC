@@ -1,6 +1,7 @@
 """Tests : python -m pytest
-Les tests fixent explicitement les interrupteurs d'arret : ils passent quels que
-soient les reglages de config.py."""
+Les tests sont independants des reglages de config.py : les valeurs attendues sont
+calculees depuis config, les interrupteurs d'arret sont fixes explicitement, et le
+test de stabilite utilise un retard servo de reference (fixture `reference`)."""
 import math
 import numpy as np
 import pytest
@@ -33,10 +34,13 @@ def test_signe_erreurs_attitude():
 # ---------------------------------------------------------------- moteur / masse
 def test_impulsion_et_poussee():
     m = Moteur()
-    assert m.I_total == pytest.approx(19.87, abs=0.01)
-    assert m.poussee(0.2) == pytest.approx(25.0)          # point exact de la courbe
-    assert m.poussee(0.075) == pytest.approx(6.25)        # interpolation lineaire
-    assert m.poussee(3.0) == 0.0
+    pts = np.array(C.courbe_poussee)
+    I_attendu = float(np.sum(0.5 * (pts[1:, 1] + pts[:-1, 1]) * np.diff(pts[:, 0])))
+    assert m.I_total == pytest.approx(I_attendu, rel=1e-3)
+    (t0, f0), (t1, f1) = C.courbe_poussee[1], C.courbe_poussee[2]
+    assert m.poussee(t1) == pytest.approx(f1, abs=1e-3)                  # point de la courbe
+    assert m.poussee((t0 + t1) / 2) == pytest.approx((f0 + f1) / 2, abs=1e-3)   # interpolation
+    assert m.poussee(pts[-1, 0] + 1.0) == 0.0
 
 
 def test_masses():
@@ -71,11 +75,18 @@ def test_retard_servo():
 
 def test_pid_pas_de_coup_de_derivee():
     pid = PID(e_init=2.0)
+    assert pid.P == C.P
     assert pid.calcul(2.0, C.dt) == pytest.approx(C.P * 2.0 + C.I * 2.0 * C.dt)
 
 
 # ---------------------------------------------------------------- simulation complete
-def test_arret_a_l_apogee():
+@pytest.fixture
+def reference(monkeypatch):
+    """Retard servo de reference (30 ms) pour le test de stabilite."""
+    monkeypatch.setattr(C, "servoDelay", 0.03)
+
+
+def test_arret_a_l_apogee(reference):
     hist, evts, _ = simuler(seed=0, verbeux=False, stop_apogee=True, stop_combustion=False)
     z = hist['z']
     assert z[-1] == pytest.approx(z.max(), abs=0.01)     # dernier point = apogee
@@ -101,3 +112,54 @@ def test_tvc_coupe_fin_combustion():
     # la tuyere revient au centre, a jeu/2 pres
     assert np.abs(hist['dp'][apres]).max() <= C.tvc_play / 2 + 1e-9
     assert np.abs(hist['dy'][apres]).max() <= C.tvc_play / 2 + 1e-9
+
+
+def test_angles_fusee():
+    from simulateur.quaternions import angles_fusee
+    q = q_from_axis_angle([0, 1, 0], math.radians(5))      # penche de 5 deg vers +X
+    ax, ay = angles_fusee(q_rotate(q, [0, 0, 1]))
+    assert ax == pytest.approx(5.0) and ay == pytest.approx(0.0, abs=1e-12)
+
+
+# ---------------------------------------------------------------- vols reels
+def test_lecture_des_vols():
+    import json, os
+    from simulateur.vols_reels import lire_vol, DOSSIER_VOLS
+    metas = json.load(open(os.path.join(DOSSIER_VOLS, "vols.json"), encoding="utf-8"))["vols"]
+    assert len(metas) >= 1
+    for meta in metas:
+        vol = lire_vol(meta)
+        assert vol["alt"].max() > 5.0                             # la fusee a monte
+        assert abs(vol["alt"][0]) < 1.0                           # altitude ~0 au debut
+        assert len(vol["t_log"]) == len(vol["ang_1"]) == len(vol["tvc_2"])
+
+
+def test_calage_rotation_libre():
+    from simulateur.vols_reels import caler_decollage
+    t = np.arange(0, 3, 0.005)
+    ang = np.where(t > 1.2, 30.0 * (t - 1.2), 0.0)               # posee, puis tourne a 30 deg/s a 1.2 s
+    vol = {"t_log": t, "ang_1": ang, "ang_2": np.zeros_like(t),
+           "pression": np.full_like(t, 1013.0), "P0": 1013.0, "t_activite": 0.5}
+    t0, methode = caler_decollage(vol, {"t": t, "alt": t}, {})
+    assert methode.startswith("rotation libre")
+    assert t0 == pytest.approx(1.2, abs=0.03)
+    assert caler_decollage(vol, {"t": t, "alt": t}, {"t_decollage": 1.0})[0] == 1.0
+
+
+def test_debut_activite():
+    from simulateur.vols_reels import debut_activite
+    t = np.arange(0, 3, 0.005)
+    a = np.where(t > 1.5, 2.0, 0.0)                               # repos puis mouvement a 1.5 s
+    z = np.zeros_like(t)
+    assert debut_activite(t, a, z, z, z) == pytest.approx(1.5, abs=0.01)
+    assert debut_activite(t, a + 1.0, z, z, z) == 0.0             # log declenche par la carte
+
+
+def test_enveloppe_des_tirages():
+    from simulateur.vols_reels import enveloppe, CLES_SIM
+    t = np.linspace(0, 1, 11)
+    sims = [dict({c: np.full(11, float(k)) for c in CLES_SIM}, t=t, t_fin_prop=0.9)
+            for k in range(3)]
+    env = enveloppe(sims)
+    assert env["n"] == 3 and np.allclose(env["ang_1"], 1.0)
+    assert np.allclose(env["ang_1_min"], 0.0) and np.allclose(env["ang_1_max"], 2.0)
