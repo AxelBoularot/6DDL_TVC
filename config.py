@@ -63,7 +63,7 @@ Ap           = l * (2 * r) # aire en plan du corps
 # ============================================================================
 angle_max_tvc = 10         # butee TUYERE par axe (deg)
 TVC_RATIO     = 2.2        # angle servo / angle tuyere
-servoDelay    = 0.07       # retard servo (s)
+servoDelay    = 0.03       # retard servo (s)
 tvc_play      = 0.5        # jeu mecanique TOTAL mesure a la TUYERE (deg)
                            # (mesure au servo : tvc_play = jeu_servo / TVC_RATIO)
 
@@ -74,7 +74,7 @@ g    = 9.81
 rho0 = 1.225
 
 # vent : moyenne + rafales (Ornstein-Uhlenbeck), repere monde
-wind_mean       = (2, 3, 3)
+wind_mean       = (2, 2, 0)
 wind_gust_sigma = 2.0      # ecart-type des rafales (m/s)
 wind_tau        = 0.3      # temps de correlation (s)
 
