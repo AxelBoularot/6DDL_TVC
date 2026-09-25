@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/star_badge.png" width="216" alt="STAR"></p>
+<p align="center"><img src="docs/star_logo.png" width="216" alt="STAR"></p>
 
 # 6DDL_TVC — 6-DOF simulator for a thrust-vector-controlled model rocket
 
