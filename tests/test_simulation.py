@@ -43,6 +43,14 @@ def test_impulsion_et_poussee():
     assert m.poussee(pts[-1, 0] + 1.0) == 0.0
 
 
+def test_moteur_lit_config_a_la_creation(monkeypatch):
+    """Modifier config.courbe_poussee depuis un script doit changer la poussee."""
+    moitie = [(t, F / 2) for t, F in C.courbe_poussee]
+    I_ref = Moteur().I_total
+    monkeypatch.setattr(C, "courbe_poussee", moitie)
+    assert Moteur().I_total == pytest.approx(I_ref / 2, rel=1e-6)
+
+
 def test_masses():
     m = Moteur()
     m0 = proprietes_massiques(0.0, m, True)[0]

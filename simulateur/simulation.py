@@ -16,7 +16,7 @@ from .dynamique import etat_initial, integrer_pas
 from .historique import Historique
 
 
-def simuler(dt=C.dt, duree=C.duree, seed=C.SEED, verbeux=True, stop_apogee=None,
+def simuler(dt=None, duree=None, seed=None, verbeux=True, stop_apogee=None,
             stop_combustion=None, couper_tvc=None):
     """Lance une simulation. Renvoie (hist, evts, moteur).
        stop_apogee, stop_combustion, couper_tvc : None -> valeur de config.py
@@ -24,6 +24,9 @@ def simuler(dt=C.dt, duree=C.duree, seed=C.SEED, verbeux=True, stop_apogee=None,
     def choix(v, defaut):
         return defaut if v is None else v
 
+    dt = C.dt if dt is None else dt
+    duree = C.duree if duree is None else duree
+    seed = C.SEED if seed is None else seed
     if seed is not None:
         np.random.seed(seed)
     moteur = Moteur(dt=dt)

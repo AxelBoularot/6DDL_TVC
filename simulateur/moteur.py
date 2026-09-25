@@ -22,7 +22,11 @@ def discretiser(points, dt):
 
 
 class Moteur:
-    def __init__(self, points=C.courbe_poussee, dt=C.dt, m_prop0=C.m_prop0):
+    def __init__(self, points=None, dt=None, m_prop0=None):
+        # valeurs lues dans config a la creation (pas a l'import)
+        points = C.courbe_poussee if points is None else points
+        dt = C.dt if dt is None else dt
+        m_prop0 = C.m_prop0 if m_prop0 is None else m_prop0
         courbe = discretiser(points, dt)
         self.t = np.array([p[0] for p in courbe])
         self.F = np.array([p[1] for p in courbe])

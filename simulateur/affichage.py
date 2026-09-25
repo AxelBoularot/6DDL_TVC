@@ -54,13 +54,13 @@ def graphiques(hist, evts):
     return fig
 
 
-def animation_3d(hist, evts, skip=30):
+def animation_3d(hist, evts, skip=30, figsize=(10, 8), interval=20):
     xa, ya, za = hist['x'][::skip], hist['y'][::skip], hist['z'][::skip]
     bzx, bzy, bzz = hist['bzx'][::skip], hist['bzy'][::skip], hist['bzz'][::skip]
     ta = hist['t'][::skip]
     max_val = max(np.max(np.abs(hist['x'])), np.max(np.abs(hist['y'])), np.max(hist['z']), 1.0)
 
-    fig3d = plt.figure(figsize=(10, 8))
+    fig3d = plt.figure(figsize=figsize)
     ax = fig3d.add_subplot(111, projection='3d')
     ax.set_title("3D trajectory (quaternion attitude)", fontsize=13, fontweight='bold')
     ax.set_xlabel("X (m)"); ax.set_ylabel("Y (m)"); ax.set_zlabel("Altitude Z (m)")
@@ -71,14 +71,14 @@ def animation_3d(hist, evts, skip=30):
     ax.plot_surface(XX, YY, np.zeros_like(XX), alpha=0.1, color='green')
 
     line_traj,   = ax.plot([], [], [], lw=1, color='gray', ls='--')
-    rocket_line, = ax.plot([], [], [], lw=3, color='#ff6600')
+    rocket_line, = ax.plot([], [], [], lw=4, color='#ff6600')
     shadow_dot,  = ax.plot([], [], [], marker='o', color='black', alpha=0.3, ls='None')
     eject_dot,   = ax.plot([], [], [], marker='^', markerfacecolor='magenta',
                            markeredgecolor='black', markersize=12, ls='None',
                            label='Motor ejection')
     time_text = ax.text2D(0.05, 0.95, "", transform=ax.transAxes, fontsize=11)
-    ax.legend(loc='upper left')
-    vis_len = max_val / 15
+    ax.legend(loc='upper right')
+    vis_len = max_val / 8
 
     def init():
         for a in [line_traj, rocket_line, shadow_dot, eject_dot]:
@@ -101,6 +101,23 @@ def animation_3d(hist, evts, skip=30):
         time_text.set_text(f"T: {ta[i]:.2f}s | Alt: {zc:.1f}m")
         return line_traj, rocket_line, shadow_dot, eject_dot, time_text
 
-    ani = FuncAnimation(fig3d, update, frames=len(ta), init_func=init, interval=20, blit=False)
+    ani = FuncAnimation(fig3d, update, frames=len(ta), init_func=init, interval=interval,
+                        blit=False)
     plt.tight_layout()
     return fig3d, ani
+
+
+def enregistrer_gif(hist, evts, chemin, fps=20, max_images=150, dpi=80):
+    """Enregistre l'animation 3D en GIF. Le pas d'echantillonnage est choisi pour
+       garder au plus max_images images ; la lecture est a vitesse reelle tant que
+       fps le permet (sinon acceleree)."""
+    from matplotlib.animation import PillowWriter
+    n = len(hist['t'])
+    dt = float(hist['t'][1] - hist['t'][0]) if n > 1 else C.dt
+    skip = max(1, int(np.ceil(n / max_images)), int(round(1.0 / (fps * dt))))
+    fps_reel = min(fps, max(1, int(round(1.0 / (skip * dt)))))
+    fig, ani = animation_3d(hist, evts, skip=skip, figsize=(7, 6), interval=1000 / fps_reel)
+    ani.save(chemin, writer=PillowWriter(fps=fps_reel), dpi=dpi)
+    plt.close(fig)
+    return chemin
+

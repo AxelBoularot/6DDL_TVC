@@ -15,6 +15,8 @@ parachute. Pure Python (NumPy + Matplotlib), easy to read and to modify.
 
 ![Results](docs/resultats.png)
 
+<p align="center"><img src="docs/animation_3d.gif" width="480" alt="3D animation of the simulated flight"></p>
+
 ## Quick start
 
 ```bash
@@ -24,13 +26,17 @@ pip install -r requirements.txt
 python main.py                 # simulate to apogee, plots + 3D animation
 ```
 
+Every run also saves the 3D animation as a GIF in `sorties/animation_3d.gif`
+(or in the `--save` folder).
+
 | Option | Effect |
 |---|---|
 | `--sol` | simulate down to the ground (motor ejection, parachute) instead of stopping at apogee |
 | `--combustion` | stop the simulation at the end of the burn |
 | `--seed N` | reproducible wind gusts and torque noise |
-| `--no-anim` | plots only |
-| `--save DIR` | save the plots as PNG, no window |
+| `--no-anim` | plots only, no 3D window |
+| `--save DIR` | save the plots (PNG) and the 3D animation (GIF) in `DIR`, no window |
+| `--no-gif` | do not save the 3D animation as a GIF |
 | `--comparer` | compare the real flights in `vols/` with the simulator (figures + README table) |
 
 Switches at the top of `config.py`: `STOP_A_APOGEE`, `STOP_FIN_COMBUSTION` (stop at burnout),
@@ -103,6 +109,9 @@ print(hist['z'].max(), hist['tilt'].max())
 - Semi-implicit Euler integration with a fixed step (1 ms by default).
 - No fins in the aerodynamic model: without thrust the rocket is not aerodynamically stable.
 - No launch rail, no roll control, no İω or jet-damping terms.
+- Pitch damping from the nose term only (no body cross-flow damping); drag coefficient
+  constant; aerodynamic coefficients entered by hand in `config.py`.
+- No servo speed limit: the servo reaches its command after the delay, instantly.
 - The backlash model assumes the nozzle stays where it was last pushed.
 - Parameters are those of one specific rocket: measure your own (mass, CG, inertia,
   nozzle position, servo delay, backlash) before trusting the results.
@@ -187,7 +196,9 @@ be forced with `t_decollage` in `vols.json`.
   offset: a steady disturbing torque (thrust misalignment or CG offset) that the
   simulator does not model yet.
 - The real rocket climbs slower than the simulated one (about 17 m vs 28 m at burnout):
-  thrust, mass or drag in `config.py` should be recalibrated.
+  thrust or mass in `config.py` should be recalibrated. Drag has little effect at these
+  speeds (Cx 0.5 → 1.5 only lowers it from 28 to 26.6 m), whereas 20 % less thrust gives
+  18.8 m and 0.1 kg more mass 19.9 m.
 - The figures cover the whole flight log, burnout included. After burnout the simulated
   rocket tumbles much faster than the real one (past 90° about 0.3 s after burnout,
   versus about 40° at the end of the real logs, 0.4–0.5 s after burnout): the motor

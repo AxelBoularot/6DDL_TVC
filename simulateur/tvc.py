@@ -34,7 +34,8 @@ class PID:
 class ChaineServo:
     """Angle tuyere voulu -> x TVC_RATIO -> angle servo (butee +/- max*ratio)
        -> retard servoDelay -> / TVC_RATIO -> jeu mecanique -> angle tuyere reel."""
-    def __init__(self, dt=C.dt):
+    def __init__(self, dt=None):
+        dt = C.dt if dt is None else dt
         self.n_retard = int(round(C.servoDelay / dt))
         self.histo = [0.0] * self.n_retard   # angles SERVO en attente
         self.i = 0
@@ -84,7 +85,7 @@ class ControleurTVC:
     """Deux axes (pitch, yaw) : erreur d'attitude -> PID -> chaine servo -> tuyere.
        Si couper=True, a la fin de la combustion le PID est coupe et la consigne
        tuyere passe a 0 (retour au centre a travers le retard et le jeu)."""
-    def __init__(self, q0, dt=C.dt, couper=None):
+    def __init__(self, q0, dt=None, couper=None):
         e0_p, e0_y = erreurs_attitude(q0)
         self.pid_p, self.pid_y = PID(e0_p), PID(e0_y)
         self.servo_p, self.servo_y = ChaineServo(dt), ChaineServo(dt)
